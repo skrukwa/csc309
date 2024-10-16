@@ -1,0 +1,30 @@
+name: Apply prettier formatting
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+      - run: npm clean-install
+      - run: npx prettier . --write
+      - id: last-commit
+        run: |
+          echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+          echo "author=$(git log -1 --pretty=\"%an <%ae>\")" >> $GITHUB_OUTPUT
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_author: ${{ steps.last-commit.outputs.author }}
+          commit_message: ${{ steps.last-commit.outputs.message }}
+          commit_options: '--amend --no-edit'
+          push_options: '--force'
+          skip_fetch: true
