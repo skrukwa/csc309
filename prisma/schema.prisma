@@ -34,6 +34,8 @@ model User {
 
   // reports created by this user
   reports      Report[]
+
+  Rating Rating[]
 }
 
 // IMMUTABLE saved templates
@@ -67,6 +69,7 @@ model Post {
   createdAt    DateTime   @default(now())
   title        String
   description  String
+  content      String?
   hidden       Boolean    @default(false)
 
   // who created this post
@@ -84,6 +87,8 @@ model Post {
 
   // reports of this post
   reports      Report[]
+
+  Rating Rating[]
 }
 
 model Comment {
@@ -109,6 +114,20 @@ model Comment {
 
   // reports of this comment
   reports      Report[]
+}
+
+model Rating {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  value        Int
+
+  // who created this rating
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id])
+
+  // what post is this rating on
+  postId       Int
+  post         Post       @relation(fields: [postId], references: [id])
 }
 
 model Report {
