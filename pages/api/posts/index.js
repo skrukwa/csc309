@@ -62,12 +62,10 @@ export default async function handler(req, res) {
       // sort by newest
       ordering = (a, b) => a.createdAt > b.createdAt;
     } else {
-      return res
-        .status(400)
-        .json({
-          error:
-            'Invalid sortby parameter, sortby must be, "highest", "lowest", "controversial", "reports", or "newest"',
-        });
+      return res.status(400).json({
+        error:
+          'Invalid sortby parameter, sortby must be, "highest", "lowest", "controversial", "reports", or "newest"',
+      });
     }
 
     let unsorted_posts = await search_posts(
@@ -129,11 +127,9 @@ export default async function handler(req, res) {
         },
       },
     });
-    return res
-      .status(200)
-      .json({
-        message: "This is a test, in the future this will create a new post",
-      });
+    return res.status(200).json({
+      message: "This is a test, in the future this will create a new post",
+    });
   } else {
     res.status(405).json({ error: "Method Not Allowed" });
   }
