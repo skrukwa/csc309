@@ -85,11 +85,9 @@ export default async function handler(req, res) {
             templates,
         );
         let sorted_posts = sort_by_ordering(unsorted_posts, ordering);
-        return res
-            .status(200)
-            .json({
-                posts: paginateArray(sorted_posts, page_size, page_number),
-            });
+        return res.status(200).json({
+            posts: paginateArray(sorted_posts, page_size, page_number),
+        });
     } else if (req.method === "POST") {
         // Create a new post
         // Permission required: logged in

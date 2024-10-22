@@ -5,9 +5,9 @@ info:
     description: API for managing users, templates, posts, comments, reports, and tags.
 
 paths:
-    /users:
+    /auth/register:
         post:
-            summary: Create a new user
+            summary: Create a new user and log in
             requestBody:
                 required: true
                 content:
@@ -40,6 +40,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ErrorMessage"
+    /login:
 
     /users/{userId}:
         parameters:
@@ -57,22 +58,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/User"
-        put:
-            summary: Update a user
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/UserUpdate"
-            responses:
-                "200":
-                    description: User updated
-        delete:
-            summary: Delete a user
-            responses:
-                "204":
-                    description: User deleted
 
     /templates:
         get:
@@ -307,6 +292,8 @@ components:
         User:
             type: object
             properties:
+                id:
+                    type: integer
                 firstName:
                     type: string
                 lastName:
@@ -336,7 +323,7 @@ components:
                     items:
                         $ref: "#/components/schemas/Report"
 
-        UserUpdate:
+        UserCreate:
             type: object
             properties:
                 firstName:
