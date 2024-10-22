@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import { average, sort_by_ordering, sum } from "@/utils/array_manipulations";
+import { sort_by_ordering, paginateArray } from "@/utils/array_manipulations";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -41,23 +41,25 @@ export default async function handler(req, res) {
     }
 
     let decoded_token = verify_access_token(token);
+    let isAdmin = false;
     let userId = null;
     if (decoded_token) {
-      userId === decoded_token.userId;
+        userId = decoded_token.userId;
+        isAdmin = decoded_token.isAdmin;
     }
 
     let ordering = (a, b) => a > b;
 
     if (sortby === "highest") {
         // sort by highest rating
-        ordering = (a, b) => sum(a.rating.rating) > sum(b.rating.rating);
+        ordering = (a, b) => sum_rating(a) > sum_rating(b);
     } else if (sortby === "lowest") {
         // sort by lowest rating
-        ordering = (a, b) => sum(a.rating.rating) < sum(b.rating.rating);
+        ordering = (a, b) => sum_rating(a) < sum_rating(b);
     } else if (sortby === "controversial") {
       // sort by most controversial
       ordering = (a, b) =>
-        Math.abs(average(a.rating.rating)) < Math.abs(average(b.rating.rating));
+        Math.abs(average_rating(a)) < Math.abs(average_rating(b));
     } else if (sortby === "reports") {
       // sort by most reports
       if (decoded_token !== null && decoded_token.isAdmin) {
@@ -76,13 +78,14 @@ export default async function handler(req, res) {
           'Invalid sortby parameter, sortby must be, "highest", "lowest", "controversial", "reports", or "newest"',
       });
     }
-
+    
     let unsorted_posts = await search_posts(
       userId,
       title,
       content,
       tags,
       templates,
+      isAdmin
     );
     let sorted_posts = sort_by_ordering(unsorted_posts, ordering);
     return res
@@ -143,9 +146,22 @@ export default async function handler(req, res) {
   }
 }
 
-async function search_posts(user, title, content, tags, templates) {
+async function search_posts(user, title, content, tags, templates, isAdmin) {
     //Search posts
-    let query = {where : {}}
+    let query = {where : {}, select : {
+        id: true,
+        title: true,
+        createdAt: true,
+        description: true,
+        content: true,
+        tags: true,
+        templates: true,
+        Rating: true,
+    }}
+    if(isAdmin){
+        query.select.reports = true;
+    }
+    
     if (title) {
         query.where.title = {
             contains: title
@@ -194,6 +210,19 @@ async function search_posts(user, title, content, tags, templates) {
     let all_unsorted_posts = await prisma.post.findMany(query)
     console.log(all_unsorted_posts)
     return all_unsorted_posts;
+}
+
+function average_rating(post){
+    return sum_rating(post) / post.Rating.length
+}
+
+function sum_rating(post){
+    let ratings = post.Rating
+    let sum_val = 0
+    for (let i = 0; i < ratings.length; i++) {
+        sum_val += ratings[i].rating
+    }
+    return sum_val
 }
 
 function verify_access_token(token) {
