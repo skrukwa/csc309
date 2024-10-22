@@ -20,7 +20,7 @@ function average(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
-function sort_by_ordering(arr) {
+function sort_by_ordering(arr, ordering) {
   // arr: array to be sorted
   // ordering: a function that takes two arguments and returns a boolean
   // returns the array sorted by the ordering function

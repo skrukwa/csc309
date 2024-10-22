@@ -18,6 +18,15 @@ export default async function handler(req, res) {
     } = req.query;
 
     //validate data:
+    page_size = parseInt(page_size);
+    page_number = parseInt(page_number);
+    if (!page_size || page_size < 1) {
+      page_size = 1;
+    }
+    if (!page_number || page_number < 1) {
+      page_number = 1;
+    }
+
     if (!title || typeof title !== "string") {
       title = "";
     }
@@ -32,8 +41,8 @@ export default async function handler(req, res) {
     }
 
     let decoded_token = verify_access_token(token);
-    userId = null;
-    if (!decoded_token) {
+    let userId = null;
+    if (decoded_token) {
       userId === decoded_token.userId;
     }
 
@@ -84,7 +93,7 @@ export default async function handler(req, res) {
     // Permission required: logged in
     let { token, title, description, content, tags, templates } = req.body;
     let decoded_token = verify_access_token(token);
-    if (decoded_token === null) {
+    if (decoded_token === null || !decoded_token || !decoded_token.id) {
       return res
         .status(403)
         .json({ error: "You must be logged in to create a post" });
@@ -106,7 +115,7 @@ export default async function handler(req, res) {
       templates = [];
     }
     // create post
-    post = await prisma.post.create({
+    let post = await prisma.post.create({
       data: {
         title: title,
         content: content,
@@ -121,15 +130,14 @@ export default async function handler(req, res) {
             return { name: template };
           }),
         },
-        userId: decoded_token.userId,
         user: {
-          connect: { id: decoded_token.userId },
+          connect: { id: parseInt(decoded_token.id) },
         },
       },
     });
-    return res.status(200).json({
-      message: "This is a test, in the future this will create a new post",
-    });
+    return res
+      .status(200)
+      .json({ message: "Post created successfully", post: post });
   } else {
     res.status(405).json({ error: "Method Not Allowed" });
   }
@@ -137,41 +145,34 @@ export default async function handler(req, res) {
 
 async function search_posts(user, title, content, tags, templates) {
   //Search posts
-  all_unsorted_posts = await prisma.post.findMany({
-    where: {
-      OR: [
-        {
-          title: {
-            contains: title,
-          },
+  let query = { where: {} };
+  if (title) {
+    query.Where.title = {
+      contains: title,
+    };
+  }
+  if (content) {
+    query.Where.content = {
+      contains: content,
+    };
+  }
+  if (user !== null) {
+    query.Where.OR = [
+      {
+        user: {
+          id: user,
         },
-        {
-          content: {
-            contains: content,
-          },
+      },
+      {
+        user: {
+          hidden: false,
         },
-        {
-          tags: {
-            hasSome: tags,
-          },
-        },
-        {
-          templates: {
-            hasSome: templates,
-          },
-        },
-      ],
-      OR: [{ hidden: false }, { userId: user }],
-    },
-    select: {
-      id: true,
-      title: true,
-      content: true,
-      tags: true,
-      templates: true,
-      rating: true,
-    },
-  });
+      },
+    ];
+  } else {
+    query.where.hidden = false;
+  }
+  let all_unsorted_posts = await prisma.post.findMany(query);
   return all_unsorted_posts;
 }
 
