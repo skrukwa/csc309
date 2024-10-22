@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import { average, sort_by_ordering } from "@/utils/array_manipulations";
+import { average, sort_by_ordering, sum } from "@/utils/array_manipulations";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -21,10 +21,10 @@ export default async function handler(req, res) {
     page_size = parseInt(page_size);
     page_number = parseInt(page_number);
     if (!page_size || page_size < 1) {
-      page_size = 1;
+        page_size = 1;
     }
     if (!page_number || page_number < 1) {
-      page_number = 1;
+        page_number = 1;
     }
 
     if (!title || typeof title !== "string") {
@@ -49,11 +49,11 @@ export default async function handler(req, res) {
     let ordering = (a, b) => a > b;
 
     if (sortby === "highest") {
-      // sort by highest rating
-      ordering = (a, b) => sum(a.rating.rating) > sum(b.rating.rating);
+        // sort by highest rating
+        ordering = (a, b) => sum(a.rating.rating) > sum(b.rating.rating);
     } else if (sortby === "lowest") {
-      // sort by lowest rating
-      ordering = (a, b) => sum(a.rating.rating) < sum(b.rating.rating);
+        // sort by lowest rating
+        ordering = (a, b) => sum(a.rating.rating) < sum(b.rating.rating);
     } else if (sortby === "controversial") {
       // sort by most controversial
       ordering = (a, b) =>
@@ -144,36 +144,56 @@ export default async function handler(req, res) {
 }
 
 async function search_posts(user, title, content, tags, templates) {
-  //Search posts
-  let query = { where: {} };
-  if (title) {
-    query.Where.title = {
-      contains: title,
-    };
-  }
-  if (content) {
-    query.Where.content = {
-      contains: content,
-    };
-  }
-  if (user !== null) {
-    query.Where.OR = [
-      {
-        user: {
-          id: user,
-        },
-      },
-      {
-        user: {
-          hidden: false,
-        },
-      },
-    ];
-  } else {
-    query.where.hidden = false;
-  }
-  let all_unsorted_posts = await prisma.post.findMany(query);
-  return all_unsorted_posts;
+    //Search posts
+    let query = {where : {}}
+    if (title) {
+        query.where.title = {
+            contains: title
+        }
+    }
+    if (content) {
+        query.where.content = {
+            contains: content
+        }
+    }
+    if (tags.length > 0) {
+        query.where.tags = {
+            some: {
+                name: {
+                    in: tags
+                }
+            }
+        }
+    }
+    if (templates.length > 0) {
+        query.where.templates = {
+            some: {
+                name: {
+                    in: templates
+                }
+            }
+        }
+    }
+
+    if (user !== null) {
+        query.where.OR = [
+            {
+                user: {
+                    id: user
+                }
+            },
+            {
+                user: {
+                    hidden: false
+                }
+            }
+        ]
+    } else {
+        query.where.hidden = false
+    }
+    let all_unsorted_posts = await prisma.post.findMany(query)
+    console.log(all_unsorted_posts)
+    return all_unsorted_posts;
 }
 
 function verify_access_token(token) {
