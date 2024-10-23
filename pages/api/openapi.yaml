@@ -40,6 +40,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ErrorMessage"
+
     /auth/login:
         post:
             summary: Log in
@@ -81,6 +82,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ErrorMessage"
+
     /auth/refresh:
         post:
             summary: Refresh access token
@@ -177,6 +179,47 @@ paths:
             responses:
                 "204":
                     description: Template deleted
+
+    /templates/{templateId}/execute:
+        parameters:
+            - in: path
+              name: templateId
+              required: true
+              schema:
+                  type: integer
+        post:
+            summary: Execute a template
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                input:
+                                    type: string
+            responses:
+                "200":
+                    description: Template executed
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    output:
+                                        type: string
+                404:
+                    description: Template not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
+                "405":
+                    description: Method not allowed
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
 
     /posts:
         get:
