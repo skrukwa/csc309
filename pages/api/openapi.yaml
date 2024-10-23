@@ -172,17 +172,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/Template"
-        put:
-            summary: Update a template
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/TemplateUpdate"
-            responses:
-                "200":
-                    description: Template updated
         delete:
             summary: Delete a template
             responses:
