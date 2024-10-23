@@ -40,7 +40,76 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ErrorMessage"
-    /login:
+    /auth/login:
+        post:
+            summary: Log in
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/UserLogin"
+            responses:
+                "200":
+                    description: User logged in
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    user:
+                                        $ref: "#/components/schemas/User"
+                                    accessToken:
+                                        $ref: "#/components/schemas/JWTToken"
+                                    refreshToken:
+                                        $ref: "#/components/schemas/JWTToken"
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
+                401:
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
+                "405":
+                    description: Method not allowed
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
+    /auth/refresh:
+        post:
+            summary: Refresh access token
+            security:
+                - BearerAuth: []
+            responses:
+                "200":
+                    description: Access token refreshed
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    accessToken:
+                                        $ref: "#/components/schemas/JWTToken"
+                                    refreshToken:
+                                        $ref: "#/components/schemas/JWTToken"
+                "401":
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
+                "405":
+                    description: Method not allowed
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorMessage"
 
     /users/{userId}:
         parameters:
@@ -339,6 +408,14 @@ components:
                 avatar:
                     type: string
 
+        UserLogin:
+            type: object
+            properties:
+                email:
+                    type: string
+                password:
+                    type: string
+
         Template:
             type: object
             properties:
@@ -401,3 +478,8 @@ components:
             properties:
                 message:
                     type: string
+
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer

@@ -1,5 +1,5 @@
 import emailValidator from "email-validator";
-import { hash } from "bcrypt";
+import { compare } from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
@@ -14,49 +14,22 @@ export default async function handler(req, res) {
 }
 
 async function handlePost(req, res) {
-    const { firstName, lastName, email, phone, isAdmin, avatar, password } =
-        req.body;
+    const { email, password } = req.body;
 
-    if (
-        !firstName ||
-        firstName.length > 100 ||
-        !lastName ||
-        lastName.length > 100 ||
-        !email ||
-        !phone ||
-        !password
-    ) {
+    if (!email || !password) {
         return res.status(400).json({ message: "Invalid fields" });
     }
 
-    if (!emailValidator.validate(email)) {
-        return res.status(400).json({ message: "Invalid email address" });
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (!phone.match(/^\d{10}$/)) {
-        return res.status(400).json({ message: "Invalid phone number" });
-    }
+    const passwordMatch = await compare(password, user.password);
 
-    const hashedPassword = await hash(password, 10);
-
-    let user;
-    try {
-        user = await prisma.user.create({
-            data: {
-                firstName,
-                lastName,
-                email,
-                phone,
-                isAdmin,
-                avatar,
-                password: hashedPassword,
-            },
-        });
-    } catch (err) {
-        if (err.code === "P2002") {
-            return res.status(400).json({ message: "Email already exists" });
-        }
-        return res.status(400).json({ message: "Cannot create user" });
+    if (!passwordMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const accessToken = jwt.sign(
